@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Cost Calculator
  * Description: A simple plugin to calculate medical program costs
- * Version: 1.0.2
+ * Version: 1.1.2
  * Author: Pasindu Oshadha
  * Author URI: http://pasinduoshadha.com/
  */
