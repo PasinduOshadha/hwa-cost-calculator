@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Cost Calculator
  * Description: A simple plugin to calculate medical program costs
- * Version: 1.0.2
+ * Version: 1.1.2
  * Author: Pasindu Oshadha
  * Author URI: http://pasinduoshadha.com/
  */
@@ -16,48 +16,47 @@
 
 function check_required_plugins()
 {
-    // is ACF PRO active
-    if (is_plugin_active('advanced-custom-fields-pro/acf.php')) {
-        //echo 'ACF pro plugin is active';
+	// is ACF PRO active
+	if (is_plugin_active('advanced-custom-fields-pro/acf.php')) {
+		//echo 'ACF pro plugin is active';
 
-    } else {
-        //echo 'ACF Pro plugin is not active';
-        add_action( 'admin_notices', function(){
-            $css_class = 'notice notice-error';
-            $message = __( 'Please install and activate ACF PRO plugin to work "Cost Calculator" correctly', 'textdomain' );
+	} else {
+		//echo 'ACF Pro plugin is not active';
+		add_action('admin_notices', function () {
+			$css_class = 'notice notice-error';
+			$message = __('Please install and activate ACF PRO plugin to work "Cost Calculator" correctly', 'textdomain');
 
-            printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $css_class ), esc_html( $message ) );
-        } );
-    }
+			printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($css_class), esc_html($message));
+		});
+	}
 
-    // is CF7 conditional fileds active
-    if (is_plugin_active('cf7-conditional-fields/contact-form-7-conditional-fields.php')) {
-        //echo 'ACF pro plugin is active';
+	// is CF7 conditional fileds active
+	if (is_plugin_active('cf7-conditional-fields/contact-form-7-conditional-fields.php')) {
+		//echo 'ACF pro plugin is active';
 
-    } else {
-        //echo 'ACF Pro plugin is not active';
-        add_action( 'admin_notices', function(){
-            $css_class = 'notice notice-error';
-            $message = __( 'Please install and activate Conditional Fields for Contact Form 7 plugin to work "Cost Calculator" correctly', 'textdomain' );
+	} else {
+		//echo 'ACF Pro plugin is not active';
+		add_action('admin_notices', function () {
+			$css_class = 'notice notice-error';
+			$message = __('Please install and activate Conditional Fields for Contact Form 7 plugin to work "Cost Calculator" correctly', 'textdomain');
 
-            printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $css_class ), esc_html( $message ) );
-        } );
-    }
+			printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($css_class), esc_html($message));
+		});
+	}
 }
 add_action('admin_init', 'check_required_plugins');
 
 
 // Cost Calculator Options Page
-if( function_exists('acf_add_options_page') ) {
-    
-    acf_add_options_page(array(
-        'page_title'    => 'Program Packages',
-        'menu_title'    => 'Program Packages',
-        'menu_slug'     => 'program-pacakages',
-        'capability'    => 'edit_posts',
-        'redirect'      => false
-    ));
-    
+if (function_exists('acf_add_options_page')) {
+
+	acf_add_options_page(array(
+		'page_title'    => 'Program Packages',
+		'menu_title'    => 'Program Packages',
+		'menu_slug'     => 'program-pacakages',
+		'capability'    => 'edit_posts',
+		'redirect'      => false
+	));
 }
 
 // Remove <p> and <br/> from Contact Form 7
@@ -67,120 +66,22 @@ add_filter('wpcf7_autop_or_not', '__return_false');
 add_action("wp_enqueue_scripts", "register_js_files");
 function register_js_files()
 {
-    // stylesheet
-    wp_enqueue_style('cost-calculator-styles', plugin_dir_url(__FILE__) . "css/calculator-styles.css", array('contact-form-7','cf7cf-style'), '1.0.0', 'all');
-    wp_enqueue_script("my_ajax_script", plugin_dir_url(__FILE__) . "js/formjs.js", array('jquery-core'));
-    //wp_enqueue_script("my_ajax_script", plugin_dir_url(__FILE__) . "js/cost-cal-form.js.js", array('jquery-core'));
+	// stylesheet
+	wp_enqueue_style('cost-calculator-styles', plugin_dir_url(__FILE__) . "css/calculator-styles.css", array('contact-form-7', 'cf7cf-style'), '1.0.0', 'all');
+	wp_enqueue_style('butterup-styles', plugin_dir_url(__FILE__) . "css/butterup.min.css", array('contact-form-7', 'cf7cf-style'), '1.0.0', 'all');
+	wp_enqueue_script("my_ajax_script", plugin_dir_url(__FILE__) . "js/cost-cal-form.js", array('jquery-core'));
+	wp_enqueue_script("butter_up_toast", plugin_dir_url(__FILE__) . "js/butterup.min.js", array());
 
-    wp_localize_script('my_ajax_script', 'ajax_params', array(
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('ajax-nonce'),
-    ));
-    wp_enqueue_script('ajax_scripts');
+	wp_localize_script('my_ajax_script', 'ajax_params', array(
+		'ajax_url' => admin_url('admin-ajax.php'),
+		'nonce' => wp_create_nonce('ajax-nonce'),
+	));
+	wp_enqueue_script('ajax_scripts');
 }
 
 // Cost Calculators
 add_action('wp_ajax_medical_form_action', 'medical_form_action'); // for logged in users only
 add_action('wp_ajax_nopriv_medical_form_action', 'medical_form_action'); // for ALL users
-
-
-function medical_form_action()
-{
-	if (!wp_verify_nonce($_POST['nonce'], 'ajax-nonce')) {
-		die('Busted!');
-	}
-
-	if (!empty($_POST['procedure'])) {
-		$procedure = $_POST['procedure'];
-	}
-
-	if (!empty($_POST['package'])) {
-		$package = $_POST['package'];
-	}
-
-	if (!empty($_POST['is_insured'])) {
-		$is_insured = $_POST['is_insured'];
-	}
-
-	// if (!empty($_POST['your_location'])) {
-	// 	$your_location = $_POST['your_location'];
-	// }
-
-	if (!empty($_POST['your_location'])) {
-		$state = $_POST['your_location'];
-	}
-
-	// if (!empty($_POST['hospital'])) {
-	// 	$hospital = $_POST['hospital'];
-	// }
-	
-	
-	// if procedure is not AB, OB, ESP
-	if($procedure !== 'Gastric Bypass' || $procedure !== 'Laparoscopic Sleeve'){
-	    $is_insured = 'Yes';
-	}
-	
-
-    // recived query
-	$recieved_query = array(
-		'procedurename'			=> $procedure,
-		'packagename'			=> $package,
-		'is_insured'			=> $is_insured,
-		'state'					=> $state,
-	);
-
-    // response init with recived query
-	$response = array(
-		'query'					=> $recieved_query
-	);
-	
-	//to breake the while loop
-	$letsEnd = false;
-
-
- 	if (have_rows('procedure_details', 'option')):
-
-
-		while (have_rows('procedure_details', 'option')) : the_row();
-
-			//$procedure_data = get_row([$format_value = true]);
-			//$response['data']['matching'] = $procedure_data;
-
-// 			// looking for a macthing query
-            if(strtolower( get_sub_field('procedure_name') ) === strtolower( $procedure )) {
-                if(strtolower( get_sub_field('package_name') ) === strtolower( $package )){
-                    if(strtolower( get_sub_field('is_insured') ) === strtolower( $is_insured )){
-                        if(strtolower( get_sub_field('state') ) === strtolower( $state )){
-                            $response["mydata_found"] = 'matching found';
-                            $response['res_status'] = 'success';
-                            $letsEnd = true;
-                            
-                            // package contents
-                            $procedure_data = get_row([$format_value = true]);
- 				            $response['data'] = $procedure_data;
-                        }
-                        else{
-                            $response['res_status'] = 'not_found';
-                        }
-                    }
-                }
-            }
-
-
-        if($letsEnd){
-            break;
-        }
-
-
- 		endwhile;
-	
-
- 	endif;
-
-
-	echo json_encode($response);
-	wp_die();
-}
 
 // function medical_form_action()
 // {
@@ -270,36 +171,36 @@ function medical_form_action()
 // 			'upfront_payment' 	=> '',
 // 			'medicare_rebates'	=> ''
 // 	);
-	
-	
-	
+
+
+
 //     //Alurion Balun WA Costs
 //     if('Allurion Balloon' == $procedure && 'WA' == $your_location){
-		
+
 // 		if( 'silver' == strtolower($package) ){
-			
+
 // 			$result['total'] = '7,250';
-			
+
 // 		}
-		
+
 // 		elseif ( 'gold' == strtolower($package) ){
-			
+
 // 			$result['total'] = '7,950';
-			
+
 // 		}
-		
+
 // 		elseif( 'platinum' == strtolower($package) ){
-			
+
 // 			$result['total'] = '14,150';
-			
+
 // 		}
-		
-		
+
+
 // 	}
-	
+
 // 	//Allurion Balloon
 // 	if('Allurion Balloon' == $procedure){
-		
+
 // 		//NSW new prices
 // 		if('NSW' == $your_location){
 // 			if( 'silver' == strtolower($package) ){
@@ -318,7 +219,7 @@ function medical_form_action()
 // 				$result['total'] = '$13,050.00';
 // 			}
 // 		}
-		
+
 // 		//WA new prices
 // 		else if('WA' == $your_location){
 // 			if( 'silver' == strtolower($package) ){
@@ -337,7 +238,7 @@ function medical_form_action()
 // 				$result['total'] = '$14,150.00';
 // 			}
 // 		}
-		
+
 // 		//VIC new prices
 // 		else if('VIC' == $your_location){
 // 			if( 'silver' == strtolower($package) ){
@@ -356,7 +257,7 @@ function medical_form_action()
 // 				$result['total'] = '$14,150.00';
 // 			}
 // 		}
-		
+
 // 		//QLD new prices
 // 		else if('QLD' == $your_location){
 // 			if( 'silver' == strtolower($package) ){
@@ -375,7 +276,7 @@ function medical_form_action()
 // 				$result['total'] = '$14,150.00';
 // 			}
 // 		}
-		
+
 // 	}
 // 	else if('Orbera Balloon' == $procedure){
 // 		//NSW
@@ -397,7 +298,7 @@ function medical_form_action()
 // 			}
 // 		}
 // 	}
-	
+
 // 	else if('Endoscopic Sleeve' == $procedure){
 // 		//NSW
 // 		if( 'NSW' == $your_location ){
@@ -455,7 +356,7 @@ function medical_form_action()
 // 					$result['total'] = '21,200.00';
 // 				}
 // 			}
-			
+
 // 		}
 // 	}
 // 	else if('Gastric Bypass' == $procedure){
@@ -495,7 +396,7 @@ function medical_form_action()
 // 					$result['total'] = '22,600.00';
 // 				}
 // 			}
-			
+
 // 		}
 // 	}
 // 	else if('CompleteCare Program' == $procedure){
@@ -505,11 +406,100 @@ function medical_form_action()
 // 			$result['upfront_payment'] = '3,078.00';
 // 			$result['medicare_rebates'] = '428.00';
 // 			$result['total'] = '2,650.00';
-	
+
 // 		}
 // 	}
-	
+
 
 //     echo json_encode($result);
 //     wp_die();
 // }
+
+function medical_form_action()
+{
+	if (!wp_verify_nonce($_POST['nonce'], 'ajax-nonce')) {
+		die('Busted!');
+	}
+
+	if (!empty($_POST['procedure'])) {
+		$procedure = $_POST['procedure'];
+	}
+
+	if (!empty($_POST['package'])) {
+		$package = $_POST['package'];
+	}
+
+	if (!empty($_POST['is_insured'])) {
+		$is_insured = $_POST['is_insured'];
+	}
+
+	// if (!empty($_POST['your_location'])) {
+	// 	$your_location = $_POST['your_location'];
+	// }
+
+	if (!empty($_POST['your_location'])) {
+		$state = $_POST['your_location'];
+	}
+
+	// if (!empty($_POST['hospital'])) {
+	// 	$hospital = $_POST['hospital'];
+	// }
+
+	$recieved_query = array(
+		'procedurename'			=> $procedure,
+		'packagename'			=> $package,
+		'is_insured'			=> $is_insured,
+		'state'					=> $state,
+	);
+
+	$response = array(
+		'query'					=> $recieved_query
+	);
+
+
+
+	$letsEnd = false;
+
+
+ 	if (have_rows('procedure_details', 'option')):
+
+
+		while (have_rows('procedure_details', 'option')) : the_row();
+
+			//$procedure_data = get_row([$format_value = true]);
+			//$response['data']['matching'] = $procedure_data;
+
+			// looking for a macthing query
+            if(strtolower( get_sub_field('procedure_name') ) === strtolower( $procedure )) {
+                if(strtolower( get_sub_field('package_name') ) === strtolower( $package )){
+                    if(strtolower( get_sub_field('is_insured') ) === strtolower( $is_insured )){
+                        if(strtolower( get_sub_field('state') ) === strtolower( $state )){
+                            $response["mydata_found"] = 'matching found';
+                            $response['res_status'] = 'success';
+                            $letsEnd = true;
+                            
+                            // package contents
+                            $pro_data = get_row([$format_value = true]);
+ 				            $response['data'] = $pro_data;
+                        }
+                        else{
+                            $response['res_status'] = 'not_found';
+                        }
+                    }
+                }
+            }
+
+
+        if($letsEnd){
+            break;
+        }
+
+
+ 		endwhile;
+	
+
+ 	endif;
+
+	echo json_encode($response);
+	wp_die();
+}

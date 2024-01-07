@@ -33,7 +33,7 @@
 }
 
 .cost-calculator .wpcf7-radio .wpcf7-list-item input[type=radio]:checked + .wpcf7-list-item-label {
-    background: #0b76ef;
+    background: #4298fa;
     color: #fff;
     height: 100%;
      cursor: pointer;
@@ -166,7 +166,7 @@
 }
 
 .cost-calculator .send{
-    /* display: none; */
+    display: none;
 }
 
 
@@ -176,9 +176,13 @@
 
 .cost-calculator  .action-button-group{
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     column-gap: 20px;
     justify-content: flex-start;
+}
+
+.cost-calculator  .action-button-group .appointment-btn{
+	display: none;
 }
 
 .cost-calculator .action-button-group .wpcf7-spinner{
@@ -189,10 +193,6 @@
     width: 80px;
 }
 
-.checkmark{
-	width: 16px;
-	margin-right: 10px;
-}
 
 .cost-calculator .price-breakdown-table,
 .cost-calculator .price-breakdown-table td{
